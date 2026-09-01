@@ -1,0 +1,2 @@
+import { ComingSoonPanel } from "@/components/admin/coming-soon-panel";
+export default function LeadsPage() { return <ComingSoonPanel title="Consultas" description="Un espacio para transformar conversaciones de WhatsApp e Instagram en oportunidades trazables." items={["Registrar interesados", "Origen de la consulta", "Producto consultado", "Estado del seguimiento", "Recordatorios", "Conversión a venta"]} />; }

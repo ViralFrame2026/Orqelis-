@@ -1,0 +1,5 @@
+import { Construction } from "lucide-react";
+
+export function ComingSoonPanel({ title, description, items }: { title: string; description: string; items: string[] }) {
+  return <div><p className="text-xs font-black uppercase tracking-[.16em] text-clay">Próxima fase</p><h1 className="font-display mt-2 text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-ink/48">{description}</p><div className="mt-8 rounded-[1.6rem] border border-ink/8 bg-white p-6 sm:p-10"><span className="grid size-14 place-items-center rounded-2xl bg-sand/60 text-clay"><Construction size={25} /></span><h2 className="font-display mt-6 text-3xl">La base ya está preparada</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-ink/52">Las tablas existen en la base de datos para que esta sección se pueda sumar sin cambiar la arquitectura actual.</p><ul className="mt-6 grid gap-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="rounded-xl bg-[#f8f6f2] px-4 py-3 text-sm font-bold text-ink/62">{item}</li>)}</ul></div></div>;
+}
