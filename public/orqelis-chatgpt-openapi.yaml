@@ -1,0 +1,408 @@
+openapi: 3.1.0
+info:
+  title: ORQELIS Catalog Assistant API
+  version: 1.1.0
+  description: Acciones privadas para que la asistente autorizada consulte, prepare y administre el catálogo de ORQELIS.
+servers:
+  - url: https://orqelis-flame.vercel.app/api/v1/admin
+security:
+  - bearerAuth: []
+paths:
+  /imports/google-drive/preview:
+    post:
+      operationId: previewGoogleDriveCatalog
+      summary: Revisar una planilla de catálogo de Google Drive sin guardar
+      description: Descarga una Google Sheet compartida como lectora, valida sus productos, categorías, duplicados y enlaces de imágenes. No modifica el catálogo.
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoogleDriveImportPreview' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '422': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+  /imports/google-drive/publish:
+    post:
+      operationId: publishGoogleDriveCatalog
+      summary: Publicar filas confirmadas de una planilla revisada
+      description: Vuelve a leer la planilla, comprueba que no haya cambiado desde la vista previa, descarga y valida las imágenes de Drive y crea hasta 20 productos confirmados. Para más productos, usar varios lotes.
+      x-openai-isConsequential: true
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          description: Identificador único de 8 a 160 caracteres para este lote. Reutilizar solamente al reintentar exactamente el mismo lote.
+          schema: { type: string, minLength: 8, maxLength: 160 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoogleDriveImportPublish' }
+      responses:
+        '201': { $ref: '#/components/responses/Success' }
+        '207': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /products:
+    get:
+      operationId: listProducts
+      summary: Consultar productos
+      description: Busca productos existentes antes de preparar o modificar alguno. Devuelve UUIDs estables que deben usarse para operaciones críticas.
+      parameters:
+        - { in: query, name: search, schema: { type: string } }
+        - { in: query, name: category, schema: { type: string } }
+        - { in: query, name: status, schema: { $ref: '#/components/schemas/ProductStatus' } }
+        - { in: query, name: featured, schema: { type: boolean } }
+        - { in: query, name: offer, schema: { type: boolean } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+    post:
+      operationId: createProduct
+      summary: Crear un producto confirmado
+      description: Crea un producto solamente después de que el usuario haya confirmado explícitamente los datos y el estado de publicación.
+      x-openai-isConsequential: true
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          description: Identificador único de 8 a 160 caracteres para esta intención. Debe reutilizarse solamente al reintentar exactamente la misma solicitud.
+          schema: { type: string, minLength: 8, maxLength: 160 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreate' }
+      responses:
+        '201': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /products/preview:
+    post:
+      operationId: previewProduct
+      summary: Preparar y validar un producto sin guardarlo
+      description: Normaliza el producto, comprueba la categoría y advierte duplicados. No publica ni escribe datos.
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreate' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '422': { $ref: '#/components/responses/Error' }
+  /products/bulk:
+    post:
+      operationId: createProductsBulk
+      summary: Crear varios productos confirmados
+      description: Crea hasta 100 productos individualmente. Requiere confirmación explícita del usuario.
+      x-openai-isConsequential: true
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          description: Identificador único de 8 a 160 caracteres para esta intención. Debe reutilizarse solamente al reintentar exactamente la misma solicitud.
+          schema: { type: string, minLength: 8, maxLength: 160 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [products]
+              properties:
+                products:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { $ref: '#/components/schemas/ProductCreate' }
+      responses:
+        '201': { $ref: '#/components/responses/Success' }
+        '207': { $ref: '#/components/responses/Success' }
+    patch:
+      operationId: updateProductsBulk
+      summary: Modificar varios productos confirmados
+      description: Aplica el mismo cambio a una lista explícita de UUIDs. No debe usarse con nombres ambiguos.
+      x-openai-isConsequential: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, changes]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 200
+                  items: { type: string, format: uuid }
+                changes: { $ref: '#/components/schemas/ProductPatch' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '207': { $ref: '#/components/responses/Success' }
+  /products/{id}:
+    get:
+      operationId: getProduct
+      summary: Consultar un producto por UUID
+      x-openai-isConsequential: false
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: UUID estable obtenido mediante listProducts.
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateProduct
+      summary: Modificar parcialmente un producto confirmado
+      description: Envía únicamente los campos que el usuario pidió cambiar. Requiere confirmación explícita.
+      x-openai-isConsequential: true
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: UUID estable obtenido mediante listProducts.
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductPatch' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: archiveProduct
+      summary: Archivar un producto confirmado
+      description: Realiza archivado reversible; nunca elimina físicamente el producto.
+      x-openai-isConsequential: true
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: UUID estable obtenido mediante listProducts.
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '404': { $ref: '#/components/responses/Error' }
+  /categories:
+    get:
+      operationId: listCategories
+      summary: Consultar categorías disponibles
+      x-openai-isConsequential: false
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+    post:
+      operationId: createCategory
+      summary: Crear una categoría confirmada
+      x-openai-isConsequential: true
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          description: Identificador único de 8 a 160 caracteres para esta intención. Debe reutilizarse solamente al reintentar exactamente la misma solicitud.
+          schema: { type: string, minLength: 8, maxLength: 160 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryCreate' }
+      responses:
+        '201': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      summary: Modificar una categoría confirmada
+      x-openai-isConsequential: true
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                name: { type: string }
+                slug: { type: string }
+                icon: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '404': { $ref: '#/components/responses/Error' }
+  /uploads/chatgpt:
+    post:
+      operationId: uploadChatGptImages
+      summary: Subir imágenes adjuntas en el mensaje de ChatGPT
+      description: Toma las referencias temporales de las imágenes que el usuario adjuntó en ChatGPT, las valida y las guarda en ORQELIS. El usuario no necesita aportar una URL pública.
+      x-openai-isConsequential: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [openaiFileIdRefs]
+              properties:
+                openaiFileIdRefs:
+                  type: array
+                  minItems: 1
+                  maxItems: 10
+                  description: Referencias de los archivos adjuntos del mensaje actual. Usar directamente los archivos aportados por el usuario; no pedir URLs públicas.
+                  items: { type: string }
+      responses:
+        '201': { $ref: '#/components/responses/Success' }
+        '413': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    Success:
+      description: Operación correcta
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data: {}
+              warnings: { type: array, items: { type: string } }
+              meta: { type: object, additionalProperties: true }
+    Error:
+      description: Error estructurado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              error:
+                type: object
+                properties:
+                  code: { type: string }
+                  message: { type: string }
+                  details: { type: array, items: { type: object, additionalProperties: true } }
+  schemas:
+    GoogleDriveImportPreview:
+      type: object
+      additionalProperties: false
+      required: [sheet_url]
+      properties:
+        sheet_url:
+          type: string
+          format: uri
+          description: Enlace completo de la Google Sheet compartida como "Cualquier persona con el enlace: Lector".
+    GoogleDriveImportPublish:
+      type: object
+      additionalProperties: false
+      required: [sheet_url, expected_sheet_hash]
+      properties:
+        sheet_url:
+          type: string
+          format: uri
+          description: El mismo enlace enviado a previewGoogleDriveCatalog.
+        expected_sheet_hash:
+          type: string
+          pattern: '^[a-fA-F0-9]{64}$'
+          description: Valor sheet_hash devuelto por la vista previa más reciente.
+        row_numbers:
+          type: array
+          minItems: 1
+          maxItems: 20
+          description: Filas exactas confirmadas por el usuario. Omitir solamente si la planilla tiene 20 productos o menos y confirmó todos.
+          items: { type: integer, minimum: 2 }
+    ProductStatus:
+      type: string
+      enum: [available, last_units, sold_out, coming_soon, hidden, archived]
+    ProductImage:
+      type: object
+      required: [image_url]
+      properties:
+        image_url: { type: string, format: uri }
+        position: { type: integer, minimum: 0 }
+        is_primary: { type: boolean }
+    ProductCreate:
+      type: object
+      additionalProperties: false
+      required: [name, category, short_description, description, price, status]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        sku: { type: [string, 'null'] }
+        category: { type: string, description: "UUID, slug o nombre exacto de una categoría existente." }
+        short_description: { type: string }
+        description: { type: string }
+        price:
+          oneOf:
+            - { type: number, minimum: 0 }
+            - { type: string, example: '55000' }
+        previous_price:
+          oneOf:
+            - { type: number, minimum: 0 }
+            - { type: string }
+            - { type: 'null' }
+        installments: { type: [integer, 'null'], minimum: 1 }
+        installment_price:
+          oneOf:
+            - { type: number, minimum: 0 }
+            - { type: string }
+            - { type: 'null' }
+        stock: { type: [integer, 'null'], minimum: 0 }
+        status: { $ref: '#/components/schemas/ProductStatus' }
+        featured: { type: boolean, default: false }
+        offer: { type: boolean, default: false }
+        is_new: { type: boolean, default: false }
+        tags: { type: array, items: { type: string } }
+        features: { type: array, items: { type: string } }
+        images: { type: array, items: { $ref: '#/components/schemas/ProductImage' } }
+    ProductPatch:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        sku: { type: [string, 'null'] }
+        category: { type: string }
+        short_description: { type: string }
+        description: { type: string }
+        price:
+          oneOf:
+            - { type: number, minimum: 0 }
+            - { type: string }
+        previous_price: { type: [number, 'null'], minimum: 0 }
+        installments: { type: [integer, 'null'], minimum: 1 }
+        installment_price: { type: [number, 'null'], minimum: 0 }
+        stock: { type: [integer, 'null'], minimum: 0 }
+        status: { $ref: '#/components/schemas/ProductStatus' }
+        featured: { type: boolean }
+        offer: { type: boolean }
+        is_new: { type: boolean }
+        tags: { type: array, items: { type: string } }
+        features: { type: array, items: { type: string } }
+        images: { type: array, items: { $ref: '#/components/schemas/ProductImage' } }
+    CategoryCreate:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        icon: { type: string, default: Package }

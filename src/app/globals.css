@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-ink: #2b211e;
+  --color-forest: #6d2f27;
+  --color-sage: #f1d7cc;
+  --color-cream: #fbf3ea;
+  --color-paper: #fffaf5;
+  --color-clay: #ad3f24;
+  --color-clay-dark: #842d1c;
+  --color-sand: #f0c9ad;
+  --font-sans: var(--font-nunito);
+  --font-display: var(--font-nunito);
+}
+
+:root {
+  --background: #fffaf5;
+  --foreground: #2b211e;
+  --font-nunito: "Aptos", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-nunito), "Trebuchet MS", sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #d94a29;
+  color: white;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+.font-display {
+  font-family: var(--font-nunito), "Trebuchet MS", sans-serif;
+}
+
+.container-store {
+  width: min(100% - 2rem, 78rem);
+  margin-inline: auto;
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(217, 74, 41, 0.4);
+  outline-offset: 3px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.glass {
+  background: rgba(255, 250, 245, 0.9);
+  backdrop-filter: blur(18px);
+}
+
+.product-card-shadow {
+  box-shadow: 0 14px 40px rgba(47, 37, 29, 0.07);
+}
+
+.grid-fade {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+/* Keep supporting copy readable at WCAG AA contrast on light surfaces. */
+:where(
+  .text-ink\/24,
+  .text-ink\/30,
+  .text-ink\/35,
+  .text-ink\/36,
+  .text-ink\/38,
+  .text-ink\/40,
+  .text-ink\/42,
+  .text-ink\/44,
+  .text-ink\/45,
+  .text-ink\/46,
+  .text-ink\/48,
+  .text-ink\/50,
+  .text-ink\/52,
+  .text-ink\/55,
+  .text-ink\/56,
+  .text-ink\/58,
+  .text-ink\/60,
+  .text-ink\/62
+) {
+  color: rgba(43, 33, 30, 0.74);
+}
+
+:where(
+  .text-white\/35,
+  .text-white\/45,
+  .text-white\/48,
+  .text-white\/58,
+  .text-white\/60,
+  .text-white\/62,
+  .text-white\/65,
+  .text-white\/68
+) {
+  color: #fff;
+}
+
+.text-forest\/70 {
+  color: #6d2f27;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

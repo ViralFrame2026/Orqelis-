@@ -1,0 +1,393 @@
+openapi: 3.1.0
+info:
+  title: ORQELIS Admin API
+  version: 1.1.0
+  description: API administrativa servidor-a-servidor para el catálogo de ORQELIS.
+servers:
+  - url: https://orqelis-flame.vercel.app/api/v1/admin
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Verificar configuración y conexión
+      security: []
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "503": { $ref: "#/components/responses/Error" }
+  /imports/google-drive/preview:
+    post:
+      summary: Revisar una Google Sheet pública sin guardar productos
+      parameters:
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoogleDriveImportPreview" }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "422": { $ref: "#/components/responses/Error" }
+        "502": { $ref: "#/components/responses/Error" }
+  /imports/google-drive/publish:
+    post:
+      summary: Publicar hasta 20 filas confirmadas de una Google Sheet revisada
+      parameters:
+        - $ref: "#/components/parameters/RequiredIdempotencyKey"
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoogleDriveImportPublish" }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "207": { $ref: "#/components/responses/Success" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /products:
+    get:
+      summary: Listar productos administrativos
+      parameters:
+        - { in: query, name: search, schema: { type: string } }
+        - { in: query, name: category, schema: { type: string } }
+        - { in: query, name: status, schema: { $ref: "#/components/schemas/ProductStatus" } }
+        - { in: query, name: featured, schema: { type: boolean } }
+        - { in: query, name: offer, schema: { type: boolean } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Error" }
+    post:
+      summary: Crear producto
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductCreate" }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /products/preview:
+    post:
+      summary: Validar y normalizar un producto sin guardarlo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductCreate" }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "422": { $ref: "#/components/responses/Error" }
+  /products/bulk:
+    post:
+      summary: Crear hasta 100 productos
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [products]
+              properties:
+                products:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { $ref: "#/components/schemas/ProductCreate" }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "207": { $ref: "#/components/responses/Success" }
+    patch:
+      summary: Modificar hasta 200 productos
+      parameters:
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [ids, changes]
+                  properties:
+                    ids: { type: array, maxItems: 200, items: { type: string, format: uuid } }
+                    changes: { $ref: "#/components/schemas/ProductPatch" }
+                - type: object
+                  required: [updates]
+                  properties:
+                    updates:
+                      type: array
+                      maxItems: 200
+                      items:
+                        type: object
+                        required: [id, changes]
+                        properties:
+                          id: { type: string, format: uuid }
+                          changes: { $ref: "#/components/schemas/ProductPatch" }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "207": { $ref: "#/components/responses/Success" }
+  /products/{id}:
+    parameters:
+      - $ref: "#/components/parameters/EntityId"
+    get:
+      summary: Consultar producto por UUID
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "404": { $ref: "#/components/responses/Error" }
+    patch:
+      summary: Modificar parcialmente un producto
+      parameters:
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductPatch" }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Archivar un producto sin borrarlo físicamente
+      parameters:
+        - $ref: "#/components/parameters/Source"
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "404": { $ref: "#/components/responses/Error" }
+  /categories:
+    get:
+      summary: Listar categorías
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+    post:
+      summary: Crear categoría
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CategoryCreate" }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "409": { $ref: "#/components/responses/Error" }
+  /categories/{id}:
+    patch:
+      summary: Modificar categoría
+      parameters:
+        - $ref: "#/components/parameters/EntityId"
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CategoryPatch" }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "404": { $ref: "#/components/responses/Error" }
+  /uploads:
+    post:
+      summary: Cargar imágenes validadas a Supabase Storage
+      parameters:
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  maxItems: 10
+                  items: { type: string, format: binary }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "413": { $ref: "#/components/responses/Error" }
+        "415": { $ref: "#/components/responses/Error" }
+  /uploads/chatgpt:
+    post:
+      summary: Cargar imágenes adjuntas en ChatGPT a Supabase Storage
+      parameters:
+        - $ref: "#/components/parameters/Source"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [openaiFileIdRefs]
+              properties:
+                openaiFileIdRefs:
+                  type: array
+                  minItems: 1
+                  maxItems: 10
+                  items: { type: string }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "413": { $ref: "#/components/responses/Error" }
+        "415": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+        "502": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  parameters:
+    EntityId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema: { type: string, minLength: 8, maxLength: 160 }
+    RequiredIdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 160 }
+    Source:
+      in: header
+      name: X-Orqelis-Source
+      required: false
+      schema: { type: string, enum: [api, ai], default: api }
+  responses:
+    Success:
+      description: Operación correcta
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success, data]
+            properties:
+              success: { type: boolean, const: true }
+              data: {}
+              warnings: { type: array, items: { type: string } }
+              meta: { type: object, additionalProperties: true }
+    Error:
+      description: Error estructurado
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  schemas:
+    GoogleDriveImportPreview:
+      type: object
+      additionalProperties: false
+      required: [sheet_url]
+      properties:
+        sheet_url: { type: string, format: uri }
+    GoogleDriveImportPublish:
+      type: object
+      additionalProperties: false
+      required: [sheet_url, expected_sheet_hash]
+      properties:
+        sheet_url: { type: string, format: uri }
+        expected_sheet_hash: { type: string, pattern: "^[a-fA-F0-9]{64}$" }
+        row_numbers:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: integer, minimum: 2 }
+    ProductStatus:
+      type: string
+      enum: [available, last_units, sold_out, coming_soon, hidden, archived]
+    ProductImageInput:
+      oneOf:
+        - { type: string, format: uri }
+        - type: object
+          properties:
+            url: { type: string, format: uri }
+            image_url: { type: string, format: uri }
+            position: { type: integer, minimum: 0 }
+            is_primary: { type: boolean }
+    ProductCreate:
+      type: object
+      additionalProperties: false
+      required: [name, category, short_description, description, price, status]
+      properties:
+        name: { type: string, maxLength: 220 }
+        slug: { type: string, maxLength: 180 }
+        sku: { type: [string, "null"], maxLength: 120 }
+        category: { type: string }
+        short_description: { type: string, maxLength: 500 }
+        description: { type: string, maxLength: 10000 }
+        price: { oneOf: [{ type: number, minimum: 0 }, { type: string }] }
+        previous_price: { type: [number, string, "null"] }
+        installments: { type: [integer, string, "null"], minimum: 1 }
+        installment_price: { type: [number, string, "null"] }
+        stock: { type: [integer, string, "null"], minimum: 0 }
+        status: { $ref: "#/components/schemas/ProductStatus" }
+        featured: { type: boolean, default: false }
+        offer: { type: boolean, default: false }
+        is_new: { type: boolean, default: false }
+        tags: { type: array, items: { type: string } }
+        features: { type: array, items: { type: string } }
+        images: { type: array, maxItems: 30, items: { $ref: "#/components/schemas/ProductImageInput" } }
+    ProductPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, maxLength: 220 }
+        slug: { type: string, maxLength: 180 }
+        sku: { type: [string, "null"], maxLength: 120 }
+        category: { type: string }
+        short_description: { type: string, maxLength: 500 }
+        description: { type: string, maxLength: 10000 }
+        price: { oneOf: [{ type: number, minimum: 0 }, { type: string }] }
+        previous_price: { type: [number, string, "null"] }
+        installments: { type: [integer, string, "null"], minimum: 1 }
+        installment_price: { type: [number, string, "null"] }
+        stock: { type: [integer, string, "null"], minimum: 0 }
+        status: { $ref: "#/components/schemas/ProductStatus" }
+        featured: { type: boolean }
+        offer: { type: boolean }
+        is_new: { type: boolean }
+        tags: { type: array, items: { type: string } }
+        features: { type: array, items: { type: string } }
+        images: { type: array, maxItems: 30, items: { $ref: "#/components/schemas/ProductImageInput" } }
+    CategoryCreate:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 120 }
+        slug: { type: string, maxLength: 140 }
+        icon: { type: string, maxLength: 80, default: Package }
+    CategoryPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, maxLength: 120 }
+        slug: { type: string, maxLength: 140 }
+        icon: { type: string, maxLength: 80 }
+    ErrorEnvelope:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, const: false }
+        error:
+          type: object
+          required: [code, message, details]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: array, items: {} }
