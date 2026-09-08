@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Boxes, ChartNoAxesCombined, History, LayoutDashboard, Menu, MessageSquareText, Settings, Tags, X } from "lucide-react";
+import { Bot, Boxes, ChartNoAxesCombined, History, LayoutDashboard, Menu, MessageSquareText, Settings, Tags, X } from "lucide-react";
 import { BrandMark } from "@/components/layout/brand-mark";
 
 const items = [
   { href: "/admin", label: "Resumen", icon: LayoutDashboard },
+  { href: "/admin/asistente", label: "ORQELIS AI", icon: Bot },
   { href: "/admin/productos", label: "Productos", icon: Boxes },
   { href: "/admin/categorias", label: "Categorías", icon: Tags },
   { href: "/admin/actividad", label: "Actividad", icon: History },
@@ -53,8 +54,8 @@ export function AdminNav() {
         </Link>
         {links}
         <div className="mt-auto rounded-2xl bg-white/6 p-4 text-xs leading-5 text-white/45">
-          <p className="font-bold text-white/70">Panel de ventas</p>
-          <p className="mt-1">Catálogo y contenido comercial en un solo lugar.</p>
+          <p className="font-bold text-white/70">ORQELIS AI</p>
+          <p className="mt-1">Catálogo, contenido y automatización en un solo lugar.</p>
         </div>
       </aside>
     </>
