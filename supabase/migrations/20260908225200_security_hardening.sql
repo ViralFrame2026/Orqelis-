@@ -13,3 +13,13 @@ revoke execute on function public.is_admin()
   from public, anon;
 grant execute on function public.is_admin()
   to authenticated, service_role;
+
+-- Cover foreign keys used by commercial tracking queries.
+create index if not exists leads_product_id_idx
+  on public.leads(product_id);
+create index if not exists sales_product_id_idx
+  on public.sales(product_id);
+
+-- Avoid re-evaluating auth.uid() for every row.
+alter policy admin_users_read_self on public.admin_users
+  using (user_id = (select auth.uid()));
