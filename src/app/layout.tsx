@@ -14,23 +14,24 @@ const nunito = Nunito_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "ORQELIS | Casa, bazar y regalos",
+    default: "ORQELIS | Comercio digital administrado con IA",
     template: "%s | ORQELIS",
   },
   description:
-    "Electro, bazar, hogar, termos, mates y productos personalizados. Entregas en Zona Sur y envíos a todo el país.",
+    "Tienda online, panel de administración y un asistente de IA que ejecuta tareas sobre tu negocio.",
   openGraph: {
     type: "website",
     locale: "es_AR",
     siteName: "ORQELIS",
-    title: "ORQELIS | Objetos que hacen hogar",
+    title: "ORQELIS | Pedís. ORQELIS lo hace.",
     description:
-      "Encontrá productos para tu casa, regalos y tecnología con entrega rápida y atención por WhatsApp.",
+      "Tienda online, administración y automatización con IA para comercios. Menos tiempo administrando. Más tiempo vendiendo.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ORQELIS",
-    description: "Electro, bazar, hogar y mucho más.",
+    title: "ORQELIS | Comercio digital con IA",
+    description:
+      "Tienda, panel de administración y un asistente de IA que ejecuta tareas sobre tu negocio.",
   },
 };
 
