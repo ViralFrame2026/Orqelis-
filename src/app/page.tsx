@@ -1,97 +1,20 @@
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Clock3, MapPin, Truck } from "lucide-react";
-import { Benefits } from "@/components/home/benefits";
-import { Hero } from "@/components/home/hero";
-import { WhatsAppCta } from "@/components/home/whatsapp-cta";
-import { CategoryGrid } from "@/components/store/category-grid";
-import { ProductGrid } from "@/components/store/product-grid";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { SITE_URL } from "@/config/site";
-import { DEMO_PRODUCTS } from "@/data/demo";
-import { getCategories, getProducts } from "@/services/catalog";
-import { getSiteSettings } from "@/services/settings";
+import { ArrowRight, Bot, CheckCircle2, LayoutDashboard, MessageSquareText, ShieldCheck, ShoppingBag, Sparkles, Zap } from "lucide-react";
 
-export default async function HomePage() {
-  const [products, categories, settings] = await Promise.all([
-    getProducts(),
-    getCategories(),
-    getSiteSettings(),
-  ]);
-  const featured = products.filter((product) => product.featured).slice(0, 4);
-  const offers = products.filter((product) => product.offer).slice(0, 4);
-  const heroProduct = featured[0] || products[0] || DEMO_PRODUCTS[0];
-  const categoriesWithOfferCount = categories.map((category) =>
-    category.slug === "ofertas"
-      ? { ...category, product_count: products.filter((product) => product.offer).length }
-      : category,
-  );
+export const metadata = { title: "ORQELIS | Comercio digital administrado con IA", description: "Tienda online, panel de administración y un asistente de IA que ejecuta tareas sobre tu negocio." };
 
-  return (
-    <>
-      <Hero product={heroProduct} phone={settings.whatsappNumber} />
+const commands = ["Subí este producto a $55.000 y dejalo destacado.", "Actualizá el stock y poné estos productos en oferta.", "Agregales características y mejorá las descripciones.", "Dejá solamente estos productos publicados."];
 
-      <section id="categorias" className="container-store scroll-mt-28 py-16 sm:py-24">
-        <div className="mb-8 flex items-end justify-between gap-5">
-          <SectionHeading eyebrow="Explorá por categoría" title="¿Qué estás buscando?" description="Entrá directo a lo que necesitás. Simple, rápido y sin perderte entre cientos de opciones." />
-          <Link href="/productos" className="focus-ring hidden shrink-0 items-center gap-2 rounded-lg text-sm font-extrabold text-clay sm:inline-flex">Ver todo <ArrowRight size={17} /></Link>
-        </div>
-        <CategoryGrid categories={categoriesWithOfferCount} />
-      </section>
+export default function HomePage() {
+  return <main className="bg-paper text-ink">
+    <section className="relative overflow-hidden border-b border-ink/10 bg-cream"><div className="container-store grid min-h-[78vh] items-center gap-12 py-20 lg:grid-cols-[1.05fr_.95fr] lg:py-28"><div><div className="inline-flex items-center gap-2 rounded-full border border-clay/20 bg-white px-4 py-2 text-xs font-black uppercase tracking-[.16em] text-clay"><Sparkles size={15}/> Comercio digital + IA</div><h1 className="font-display mt-7 max-w-4xl text-5xl leading-[.98] sm:text-6xl lg:text-7xl">Pedís.<br/><span className="text-clay">ORQELIS lo hace.</span></h1><p className="mt-7 max-w-2xl text-lg leading-8 text-ink/65">Una plataforma para comercios que combina tienda online, administración y un asistente de inteligencia artificial capaz de ejecutar tareas sobre tu catálogo con instrucciones simples.</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/demo" className="inline-flex min-h-13 items-center gap-2 rounded-xl bg-ink px-6 py-4 text-sm font-extrabold text-white">Ver demo de la tienda <ArrowRight size={18}/></Link><a href="#como-funciona" className="inline-flex min-h-13 items-center gap-2 rounded-xl border border-ink/15 bg-white px-6 py-4 text-sm font-extrabold">Cómo funciona</a></div><p className="mt-5 text-sm text-ink/45">Menos tiempo administrando. Más tiempo vendiendo.</p></div><div className="rounded-[2rem] border border-ink/10 bg-white p-5 shadow-2xl shadow-ink/10 sm:p-7"><div className="flex items-center justify-between border-b border-ink/10 pb-4"><div><p className="text-xs font-black uppercase tracking-[.16em] text-clay">ORQELIS AI</p><p className="mt-1 font-extrabold">Asistente del negocio</p></div><span className="grid size-11 place-items-center rounded-2xl bg-clay text-white"><Bot size={23}/></span></div><div className="space-y-4 py-6"><div className="ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-ink p-4 text-sm leading-6 text-white">Subí este producto. Cuesta $55.000, tengo 5 unidades y quiero que aparezca destacado.</div><div className="max-w-[88%] rounded-2xl rounded-bl-md bg-sand/55 p-4 text-sm leading-6"><div className="mb-2 flex items-center gap-2 font-extrabold text-clay"><CheckCircle2 size={17}/> Listo</div>Producto preparado, organizado y publicado en la tienda.</div></div><div className="grid grid-cols-3 gap-2 border-t border-ink/10 pt-4 text-center text-[11px] font-extrabold"><span className="rounded-xl bg-cream p-3">Producto ✓</span><span className="rounded-xl bg-cream p-3">Stock ✓</span><span className="rounded-xl bg-cream p-3">Destacado ✓</span></div></div></div></section>
 
-      <section className="bg-cream py-16 sm:py-24">
-        <div className="container-store">
-          <div className="mb-8 flex items-end justify-between gap-5">
-            <SectionHeading eyebrow="Elegidos para vos" title="Productos destacados" description="Los más buscados, las novedades y esas oportunidades que vale la pena mirar." />
-            <Link href="/productos" className="focus-ring hidden shrink-0 items-center gap-2 rounded-lg text-sm font-extrabold text-clay sm:inline-flex">Ver catálogo <ArrowRight size={17} /></Link>
-          </div>
-          <ProductGrid products={featured} phone={settings.whatsappNumber} baseUrl={SITE_URL} emptyMessage="Marcá productos como destacados desde el panel administrador." />
-        </div>
-      </section>
+    <section className="container-store py-20 sm:py-28"><div className="mx-auto max-w-3xl text-center"><p className="text-xs font-black uppercase tracking-[.2em] text-clay">Un sistema, tres piezas</p><h2 className="font-display mt-3 text-4xl sm:text-5xl">Todo lo que el comercio necesita</h2><p className="mt-4 text-ink/60">ORQELIS no es solamente una tienda. Es la infraestructura para vender y mantener el negocio actualizado.</p></div><div className="mt-12 grid gap-5 md:grid-cols-3">{[[ShoppingBag,"ORQELIS Store","Una tienda profesional para que tus clientes exploren productos, ofertas y compren desde cualquier dispositivo."],[LayoutDashboard,"ORQELIS Admin","Controlá catálogo, imágenes, categorías, precios, stock, destacados y promociones sin tocar código."],[Bot,"ORQELIS AI","Dale instrucciones en lenguaje natural y delegá tareas repetitivas de administración del catálogo."]].map(([Icon,title,text]) => { const I=Icon as typeof ShoppingBag; return <article key={String(title)} className="rounded-[1.75rem] border border-ink/10 bg-white p-7"><span className="grid size-12 place-items-center rounded-2xl bg-sand/55 text-clay"><I size={23}/></span><h3 className="font-display mt-6 text-2xl">{String(title)}</h3><p className="mt-3 text-sm leading-6 text-ink/60">{String(text)}</p></article>})}</div></section>
 
-      <section className="container-store py-16 sm:py-24">
-        <div className="mb-8 flex items-end justify-between gap-5">
-          <SectionHeading eyebrow="Precio especial" title="Ofertas que no duran para siempre" description="Aprovechá valores promocionales sujetos a stock disponible." />
-          <Link href="/ofertas" className="focus-ring hidden shrink-0 items-center gap-2 rounded-lg text-sm font-extrabold text-clay sm:inline-flex">Todas las ofertas <ArrowRight size={17} /></Link>
-        </div>
-        <ProductGrid products={offers} phone={settings.whatsappNumber} baseUrl={SITE_URL} emptyMessage="Marcá productos como oferta desde el panel administrador." />
-      </section>
+    <section id="como-funciona" className="bg-forest py-20 text-white sm:py-28"><div className="container-store grid gap-12 lg:grid-cols-2 lg:items-center"><div><p className="text-xs font-black uppercase tracking-[.2em] text-sand">La diferencia está en pedir</p><h2 className="font-display mt-3 text-4xl sm:text-5xl">Administrar sin hacer todo manualmente.</h2><p className="mt-5 max-w-xl leading-7 text-white/65">En lugar de entrar a múltiples formularios para cada cambio, ORQELIS AI convierte una instrucción en acciones concretas sobre el sistema.</p><div className="mt-8 grid gap-3">{commands.map((command)=><div key={command} className="flex gap-3 rounded-2xl bg-white/8 p-4"><MessageSquareText className="mt-0.5 shrink-0 text-sand" size={19}/><span className="text-sm text-white/85">“{command}”</span></div>)}</div></div><div className="rounded-[2rem] bg-white p-7 text-ink"><p className="text-xs font-black uppercase tracking-[.18em] text-clay">Flujo ORQELIS</p>{[["01","Pedís","Escribís lo que necesitás en lenguaje natural."],["02","La IA interpreta","Identifica productos, cambios y datos necesarios."],["03","ORQELIS ejecuta","Actualiza el sistema respetando permisos y validaciones."],["04","Tu tienda queda lista","Los cambios se reflejan en la experiencia del cliente."]].map(([n,t,d])=><div key={n} className="grid grid-cols-[42px_1fr] gap-4 border-b border-ink/10 py-5 last:border-0"><span className="font-display text-2xl text-clay">{n}</span><div><p className="font-extrabold">{t}</p><p className="mt-1 text-sm text-ink/55">{d}</p></div></div>)}</div></div></section>
 
-      <section className="container-store pb-16 sm:pb-24">
-        <SectionHeading eyebrow="Comprar con tranquilidad" title="Fácil desde que preguntás hasta que lo recibís" align="center" />
-        <div className="mt-9"><Benefits /></div>
-      </section>
+    <section className="container-store py-20 sm:py-28"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{[[Zap,"Menos trabajo operativo","Automatizá tareas repetitivas del catálogo."],[ShieldCheck,"Control y seguridad","Acciones sensibles pueden requerir confirmación."],[Sparkles,"Contenido asistido","Descripciones y características mejor organizadas."],[ShoppingBag,"Adaptable a tu marca","Identidad, catálogo y operación de cada comercio."]].map(([Icon,t,d])=>{const I=Icon as typeof Zap;return <div key={String(t)} className="rounded-2xl bg-cream p-6"><I className="text-clay"/><p className="mt-4 font-extrabold">{String(t)}</p><p className="mt-2 text-sm leading-6 text-ink/55">{String(d)}</p></div>})}</div></section>
 
-      <section className="overflow-hidden bg-forest text-white">
-        <div className="container-store grid items-stretch lg:grid-cols-2">
-          <div className="flex flex-col justify-center py-14 pr-0 sm:py-20 lg:pr-14">
-            <span className="grid size-12 place-items-center rounded-2xl bg-white/10 text-sand"><Clock3 size={23} /></span>
-            <p className="mt-6 text-xs font-black uppercase tracking-[.2em] text-sand">Cuando lo necesitás</p>
-            <h2 className="font-display mt-3 text-4xl leading-tight sm:text-5xl">Entregas de un día para el otro</h2>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-white/65 sm:text-base">Coordinamos por WhatsApp el punto y horario. Sujeto a disponibilidad y coordinación previa.</p>
-            <Link href="/entregas" className="focus-ring mt-7 inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-ink">Ver puntos de entrega <ArrowRight size={17} /></Link>
-          </div>
-          <div className="relative min-h-80 overflow-hidden lg:min-h-full">
-            <Image src="/products/termo-detalle.svg" alt="Detalle de un producto personalizado" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-forest/45 to-transparent lg:from-forest/75" />
-            <div className="absolute bottom-6 left-6 right-6 rounded-2xl bg-paper/94 p-5 text-ink shadow-xl backdrop-blur sm:bottom-8 sm:left-8 sm:right-auto sm:max-w-sm">
-              <div className="flex gap-3"><MapPin className="mt-0.5 shrink-0 text-clay" size={21} /><div><p className="font-extrabold">Más de 18 puntos</p><p className="mt-1 text-xs leading-5 text-ink/55">Zona Sur y CABA. También coordinamos otros puntos.</p></div></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container-store py-16 sm:py-24">
-        <div className="rounded-[2rem] border border-clay/15 bg-sand/45 px-6 py-10 sm:px-12 sm:py-12">
-          <div className="grid gap-7 lg:grid-cols-[auto_1fr_auto] lg:items-center">
-            <span className="grid size-14 place-items-center rounded-2xl bg-clay text-white"><Truck size={27} /></span>
-            <div><p className="text-xs font-black uppercase tracking-[.2em] text-clay">Llegamos más lejos</p><h2 className="font-display mt-2 text-3xl sm:text-4xl">Envíos a todo el país</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-ink/62">{settings.shippingText}</p></div>
-            <Link href="/contacto" className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink px-5 text-sm font-extrabold text-white">Calcular envío <ArrowRight size={17} /></Link>
-          </div>
-        </div>
-      </section>
-
-      <WhatsAppCta phone={settings.whatsappNumber} />
-    </>
-  );
+    <section id="contacto" className="container-store pb-24"><div className="overflow-hidden rounded-[2.25rem] bg-clay px-7 py-12 text-white sm:px-12 lg:flex lg:items-center lg:justify-between lg:gap-10"><div><p className="text-xs font-black uppercase tracking-[.2em] text-sand">ORQELIS para comercios</p><h2 className="font-display mt-3 text-4xl sm:text-5xl">¿Qué le delegarías primero a la IA?</h2><p className="mt-4 max-w-2xl text-white/75">Estamos preparando ORQELIS para implementarlo en distintos negocios con su propia identidad, catálogo y configuración.</p></div><div className="mt-8 flex shrink-0 flex-wrap gap-3 lg:mt-0"><Link href="/demo" className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-4 text-sm font-extrabold text-ink">Probar la demo <ArrowRight size={18}/></Link></div></div></section>
+  </main>;
 }
