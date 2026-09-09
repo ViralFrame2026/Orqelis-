@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Bot, Boxes, ChartNoAxesCombined, History, LayoutDashboard, Menu, MessageSquareText, Settings, Tags, X } from "lucide-react";
+import { Bot, Boxes, ChartNoAxesCombined, History, Layers3, LayoutDashboard, Menu, MessageSquareText, Settings, Tags, X } from "lucide-react";
 import { BrandMark } from "@/components/layout/brand-mark";
 
 const items = [
   { href: "/admin", label: "Resumen", icon: LayoutDashboard },
-  { href: "/admin/asistente", label: "ORQELIS AI", icon: Bot },
+  { href: "/admin/asistente", label: "ORQELIS AI", icon: Bot, exact: true },
+  { href: "/admin/asistente/masivo", label: "IA · Operaciones masivas", icon: Layers3 },
   { href: "/admin/productos", label: "Productos", icon: Boxes },
   { href: "/admin/categorias", label: "Categorías", icon: Tags },
   { href: "/admin/actividad", label: "Actividad", icon: History },
@@ -22,8 +23,8 @@ export function AdminNav() {
   const [open, setOpen] = useState(false);
   const links = (
     <nav className="grid gap-1">
-      {items.map(({ href, label, icon: Icon }) => {
-        const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
+      {items.map(({ href, label, icon: Icon, exact }) => {
+        const active = href === "/admin" || exact ? pathname === href : pathname.startsWith(href);
 
         return (
           <Link key={href} href={href} onClick={() => setOpen(false)} className={`focus-ring flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-white text-ink shadow-sm" : "text-white/60 hover:bg-white/8 hover:text-white"}`}>
