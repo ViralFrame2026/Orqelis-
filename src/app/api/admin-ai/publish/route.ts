@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAdminActivity } from "@/lib/admin-api/audit";
 import { createProductSchema } from "@/lib/admin-api/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminUser } from "@/services/auth";
@@ -35,13 +36,32 @@ export async function POST(request: Request) {
     if (!supabase) return NextResponse.json({ error: "Supabase no está configurado." }, { status: 503 });
 
     let images = parsed.data.images;
+    let uploadedImage = false;
     if (image instanceof File && image.size > 0) {
       const uploaded = await uploadAdminImages(supabase, [image], "ai");
       images = uploaded.map((item, index) => ({ image_url: item.url, position: index, is_primary: index === 0 }));
+      uploadedImage = uploaded.length > 0;
     }
 
     const input = { ...parsed.data, images };
     const result = await createAdminProduct(supabase, input, "ai");
+    await logAdminActivity(supabase, {
+      action: "ai_product_published",
+      entityType: "product",
+      entityId: result.product.id,
+      source: "ai",
+      summary: {
+        product: result.product.name,
+        category: result.product.category?.name ?? parsed.data.category,
+        price: result.product.price,
+        stock: result.product.stock,
+        status: result.product.status,
+        featured: result.product.featured,
+        offer: result.product.offer,
+        image_uploaded: uploadedImage,
+      },
+    });
+
     return NextResponse.json({
       product: result.product,
       warnings: result.warnings,
