@@ -36,12 +36,12 @@ export async function POST(request: Request) {
 
     let images = parsed.data.images;
     if (image instanceof File && image.size > 0) {
-      const uploaded = await uploadAdminImages(supabase, [image], "admin");
+      const uploaded = await uploadAdminImages(supabase, [image], "ai");
       images = uploaded.map((item, index) => ({ image_url: item.url, position: index, is_primary: index === 0 }));
     }
 
     const input = { ...parsed.data, images };
-    const result = await createAdminProduct(supabase, input, "admin");
+    const result = await createAdminProduct(supabase, input, "ai");
     return NextResponse.json({
       product: result.product,
       warnings: result.warnings,
