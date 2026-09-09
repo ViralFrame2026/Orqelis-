@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAdminActivity } from "@/lib/admin-api/audit";
 import { patchProductSchema } from "@/lib/admin-api/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminUser } from "@/services/auth";
@@ -25,6 +26,31 @@ export async function POST(request: Request) {
 
     const before = await getAdminProduct(supabase, productId);
     const result = await updateAdminProduct(supabase, productId, parsed.data, "ai");
+
+    await logAdminActivity(supabase, {
+      action: "ai_product_edited",
+      entityType: "product",
+      entityId: productId,
+      source: "ai",
+      summary: {
+        product: result.product.name,
+        fields: Object.keys(parsed.data),
+        before: {
+          price: before.price,
+          stock: before.stock,
+          status: before.status,
+          featured: before.featured,
+          offer: before.offer,
+        },
+        after: {
+          price: result.product.price,
+          stock: result.product.stock,
+          status: result.product.status,
+          featured: result.product.featured,
+          offer: result.product.offer,
+        },
+      },
+    });
 
     return NextResponse.json({
       product: result.product,
