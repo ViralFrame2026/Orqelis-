@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAdminActivity } from "@/lib/admin-api/audit";
 import { patchProductSchema } from "@/lib/admin-api/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminUser } from "@/services/auth";
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
     if (!supabase) return NextResponse.json({ error: "Supabase no está configurado." }, { status: 503 });
 
     const results: Array<{ id: string; success: boolean; name?: string; error?: string }> = [];
+    const changedFields = new Set<string>();
     for (const candidate of rawUpdates) {
       if (!candidate || typeof candidate !== "object") continue;
       const record = candidate as Record<string, unknown>;
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
         results.push({ id, success: false, error: "Cambio inválido." });
         continue;
       }
+      Object.keys(parsed.data).forEach((field) => changedFields.add(field));
       try {
         const result = await updateAdminProduct(supabase, id, parsed.data, "ai");
         results.push({ id, success: true, name: result.product.name });
@@ -42,6 +45,19 @@ export async function POST(request: Request) {
 
     const modified = results.filter((item) => item.success).length;
     const failed = results.length - modified;
+    await logAdminActivity(supabase, {
+      action: "ai_bulk_edited",
+      entityType: "product_bulk",
+      source: "ai",
+      summary: {
+        requested: rawUpdates.length,
+        modified,
+        failed,
+        fields: [...changedFields],
+        products: results.filter((item) => item.success).map((item) => item.name).filter(Boolean).slice(0, 20),
+      },
+    });
+
     return NextResponse.json({
       message: failed ? `${modified} producto(s) modificados y ${failed} con error.` : `${modified} producto(s) modificados correctamente.`,
       modified,
