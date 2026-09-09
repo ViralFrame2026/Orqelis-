@@ -44,18 +44,21 @@ export async function POST(request: Request) {
       .limit(500);
     if (error) return NextResponse.json({ error: "No pude consultar el catálogo." }, { status: 503 });
 
-    const products = (data ?? []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      price: row.price,
-      previous_price: row.previous_price,
-      stock: row.stock,
-      status: row.status,
-      featured: row.featured,
-      offer: row.offer,
-      is_new: row.is_new,
-      category: Array.isArray(row.categories) ? row.categories[0]?.name : row.categories?.name,
-    }));
+    const products = (data ?? []).map((row) => {
+      const relation = row.categories as unknown as { name?: string }[] | null;
+      return {
+        id: row.id,
+        name: row.name,
+        price: row.price,
+        previous_price: row.previous_price,
+        stock: row.stock,
+        status: row.status,
+        featured: row.featured,
+        offer: row.offer,
+        is_new: row.is_new,
+        category: Array.isArray(relation) ? relation[0]?.name : undefined,
+      };
+    });
     const byId = new Map(products.map((product) => [product.id, product]));
 
     const apiKey = process.env.ORQELIS_CHATGPT_API_KEY;
